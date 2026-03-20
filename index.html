@@ -513,7 +513,10 @@ function srcForm(id){
     <div class="fg"><label>Primary contact *</label><input id="sf-c" value="${v('contact')}" placeholder="Jane Smith"></div></div>
     <div class="r2"><div class="fg"><label>Email *</label><input id="sf-e" type="email" value="${v('email')}" placeholder="jane@acme.com"></div>
     <div class="fg"><label>Phone</label><input id="sf-p" value="${v('phone')}" placeholder="303-555-0100"></div></div>
-    <div class="fg"><label>Business address</label><input id="sf-a" value="${v('addr')}" placeholder="123 Main St, Denver CO 80202"></div>
+    <div class="fg"><label>Street address</label><input id="sf-a1" value="${v('addr1')}" placeholder="123 Main St"></div>
+    <div class="r3"><div class="fg"><label>City / Suburb</label><input id="sf-a2" value="${v('city')}" placeholder="Denver"></div>
+    <div class="fg"><label>State</label><input id="sf-a3" value="${v('state')}" placeholder="CO"></div>
+    <div class="fg"><label>ZIP code</label><input id="sf-a4" value="${v('zip')}" placeholder="80202"></div></div>
     <div class="r2"><div class="fg"><label>EIN / ABN</label><input id="sf-ein" value="${v('ein')}" placeholder="12-3456789"></div>
     <div class="fg"><label>Status</label><select id="sf-st"><option ${v('status','Active')==='Active'?'selected':''}>Active</option><option ${v('status')==='Pending'?'selected':''}>Pending</option><option ${v('status')==='Inactive'?'selected':''}>Inactive</option></select></div></div>
     <div class="fs">Banking & payout</div>
@@ -565,7 +568,9 @@ function saveSrc(id){
   const an=raw.startsWith('****')?raw:(raw.length>=4?'****'+raw.slice(-4):raw);
   const pr=getPR();
   const inc=pr.map(r=>r.t==='mrr'?r.q+'x MRR':'$'+r.a+' flat').join(' + ');
-  const data={name,email,contact:document.getElementById('sf-c').value,phone:document.getElementById('sf-p').value,addr:document.getElementById('sf-a').value,ein:document.getElementById('sf-ein').value,status:document.getElementById('sf-st').value,bank:document.getElementById('sf-bk').value,ah:document.getElementById('sf-ah').value,an,rn:document.getElementById('sf-rn').value,at:document.getElementById('sf-at').value,pm:document.getElementById('sf-pm').value,type:document.getElementById('sf-ty').value,pr,inc,trig:document.getElementById('sf-trig').value,terms:document.getElementById('sf-trm').value,aref:document.getElementById('sf-ar').value,sd:document.getElementById('sf-sd').value,owner:document.getElementById('sf-ow').value,notes:document.getElementById('sf-nt').value};
+  const a1=document.getElementById('sf-a1').value.trim(),a2=document.getElementById('sf-a2').value.trim(),a3=document.getElementById('sf-a3').value.trim(),a4=document.getElementById('sf-a4').value.trim();
+  const addr=[a1,a2,a3,a4].filter(Boolean).join(', ');
+  const data={name,email,contact:document.getElementById('sf-c').value,phone:document.getElementById('sf-p').value,addr1:a1,city:a2,state:a3,zip:a4,addr,ein:document.getElementById('sf-ein').value,status:document.getElementById('sf-st').value,bank:document.getElementById('sf-bk').value,ah:document.getElementById('sf-ah').value,an,rn:document.getElementById('sf-rn').value,at:document.getElementById('sf-at').value,pm:document.getElementById('sf-pm').value,type:document.getElementById('sf-ty').value,pr,inc,trig:document.getElementById('sf-trig').value,terms:document.getElementById('sf-trm').value,aref:document.getElementById('sf-ar').value,sd:document.getElementById('sf-sd').value,owner:document.getElementById('sf-ow').value,notes:document.getElementById('sf-nt').value};
   pRC=0;
   if(id){const ix=db.sources.findIndex(s=>s.id===id);db.sources[ix]={...db.sources[ix],...data};toast('Updated');}
   else{db.sources.push({id:nSid(),...data});toast('Lead source added');}
@@ -685,7 +690,8 @@ function dUCB(){const f=parseFloat(document.getElementById('df-f')?.value)||0;co
 function dSPA(t){dPA=t;document.querySelectorAll('.pab').forEach(b=>b.classList.remove('on'));['pi-inv','pi-card'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.background='';el.style.color='';}});document.getElementById('pa-'+t).classList.add('on');document.getElementById('pi-'+t).style.background='var(--pu)';document.getElementById('pi-'+t).style.color='#fff';document.querySelectorAll('.ppan').forEach(p=>p.classList.remove('show'));document.getElementById('pp-'+t).classList.add('show');if(t==='card')initSE();const sb=document.getElementById('dsave');if(sb)sb.textContent=t==='card'?'Charge & save deal':'Send invoice & save deal';}
 function togCT(el){el.closest('.ctog').querySelectorAll('.ct2').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
 function dSCC(t){dCC=t;document.querySelectorAll('#pp-card .ct2').forEach(c=>c.classList.remove('on'));document.getElementById('ct-'+t).classList.add('on');dUCB();}
-function initSE(){if(!stripe){document.getElementById('serr').textContent='Stripe not configured — add key in Settings';return;}if(cardEl)return;const els=stripe.elements();cardEl=els.create('card',{style:{base:{fontFamily:'DM Sans,sans-serif',fontSize:'13px'}}});cardEl.mount('#sel');}
+function initSE(){if(!stripe){document.getElementById('serr').textContent='Stripe not configured — paste your publishable key (pk_live_... or pk_test_...) in Settings';return;}
+  if(!cfg.spk||(!cfg.spk.startsWith('pk_live_')&&!cfg.spk.startsWith('pk_test_'))){document.getElementById('serr').textContent='Invalid Stripe key — make sure you\'re using the publishable key (starts with pk_live_ or pk_test_), not the secret key';return;}if(cardEl)return;const els=stripe.elements();cardEl=els.create('card',{style:{base:{fontFamily:'DM Sans,sans-serif',fontSize:'13px'}}});cardEl.mount('#sel');}
 
 async function saveDeal(){
   const cn=document.getElementById('df-cn')?.value.trim();
