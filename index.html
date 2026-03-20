@@ -705,14 +705,17 @@ async function saveDeal(){
   const deal={id:nDid(),customer:cn,email:document.getElementById('df-ce')?.value||'',phone:document.getElementById('df-cp')?.value||'',loc:document.getElementById('df-cl')?.value||'',plan:dPlan,mrr:dMrr,commission:comm,srcId:sid,srcName:src.name,rep:document.getElementById('df-r')?.value||'',date:document.getElementById('df-dt')?.value||td(),otf:fee,fd:document.getElementById('df-fd')?.value||'Website launch fee',ft:dFT,notes:document.getElementById('df-nt')?.value||'',stage:1,s1d:td(),s2d:'',s2u:'',s2b:'',s3d:'',s3a:0,s3r:'',s4d:'',s4a:0,s4m:'',s4r:'',s4ab:''};
   if(dPA==='card'&&cardEl&&stripe){
     const btn=document.getElementById('dsave');if(btn){btn.textContent='Processing...';btn.disabled=true;}
-    const{token,error}=await stripe.createToken(cardEl);
-    if(error){document.getElementById('serr').textContent=error.message;if(btn){btn.textContent='Charge & save deal';btn.disabled=false;}return;}
     const h=Math.round(fee/2*100),sa=Math.round(dMrr*100);
     const ca=dCC==='deposit'?h:dCC==='sub'?sa:h+sa;
     if(ca<=0){document.getElementById('serr').textContent='Amount is $0 — enter a one-time fee amount above';if(btn){btn.textContent='Charge & save deal';btn.disabled=false;}return;}
-    const res=await api('charge',{token:token.id,amount:ca,desc:`ZING — ${cn} ${dPlan}`});
-    if(res&&res.ok){deal.s3a=ca/100;deal.s3r=res.cid;document.getElementById('psuc').classList.add('show');document.getElementById('pref').textContent=`Stripe ref: ${res.cid}`;}
-    else{document.getElementById('serr').textContent='Payment failed: '+(res?.err||'Unknown error — check Stripe dashboard');if(btn){btn.textContent='Charge & save deal';btn.disabled=false;}return;}
+    // Step 1: create PaymentIntent on server
+    const pi=await api('charge',{amount:ca,desc:`ZING — ${cn} ${dPlan}`});
+    if(!pi||!pi.clientSecret){document.getElementById('serr').textContent='Payment failed: '+(pi?.err||'Could not create payment');if(btn){btn.textContent='Charge & save deal';btn.disabled=false;}return;}
+    // Step 2: confirm card in browser (handles 3DS automatically)
+    const{paymentIntent,error}=await stripe.confirmCardPayment(pi.clientSecret,{payment_method:{card:cardEl}});
+    if(error){document.getElementById('serr').textContent='Payment failed: '+error.message;if(btn){btn.textContent='Charge & save deal';btn.disabled=false;}return;}
+    if(paymentIntent&&paymentIntent.status==='succeeded'){deal.s3a=ca/100;deal.s3r=paymentIntent.id;document.getElementById('psuc').classList.add('show');document.getElementById('pref').textContent=`Stripe ref: ${paymentIntent.id}`;}
+    else{document.getElementById('serr').textContent='Payment failed: status '+paymentIntent?.status;if(btn){btn.textContent='Charge & save deal';btn.disabled=false;}return;}
   }else if(dPA==='inv'){
     const ie=document.getElementById('inv-to')?.value;
     if(ie){const ir=await api('stripeInv',{cn,ce:ie,desc:`${dPlan} — ${deal.fd}`,amount:Math.round(fee/2*100),due:document.getElementById('inv-due')?.value});if(ir?.id){deal.sInvId=ir.id;toast('Invoice sent via Stripe');}}
