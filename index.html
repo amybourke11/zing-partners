@@ -576,7 +576,7 @@ function saveSrc(id){
   const data={name,email,contact:document.getElementById('sf-c').value,phone:document.getElementById('sf-p').value,addr1:a1,city:a2,state:a3,zip:a4,addr,ein:document.getElementById('sf-ein').value,status:document.getElementById('sf-st').value,bank:document.getElementById('sf-bk').value,ah:document.getElementById('sf-ah').value,an,rn:document.getElementById('sf-rn').value,at:document.getElementById('sf-at').value,pm:document.getElementById('sf-pm').value,type:document.getElementById('sf-ty').value,pr,inc,trig:document.getElementById('sf-trig').value,terms:document.getElementById('sf-trm').value,aref:document.getElementById('sf-ar').value,sd:document.getElementById('sf-sd').value,owner:document.getElementById('sf-ow').value,notes:document.getElementById('sf-nt').value};
   pRC=0;
   if(id){const ix=db.sources.findIndex(s=>s.id===id);db.sources[ix]={...db.sources[ix],...data};toast('Updated');}
-  else{db.sources.push({id:nSid(),...data});toast('Lead source added');}
+  else{db.sources.push({id:nSid(),...data,created:td()});toast('Lead source added');}
   api('saveSrc',{src:id?db.sources.find(x=>x.id===id):db.sources[db.sources.length-1]});
   sL();cM();render();
 }
@@ -705,7 +705,7 @@ async function saveDeal(){
   const src=db.sources.find(s=>s.id===sid);
   const fee=parseFloat(document.getElementById('df-f')?.value)||0;
   const comm=src.pr?src.pr.reduce((t,r)=>t+(r.t==='mrr'?dMrr*(parseInt(r.q)||1):(parseFloat(r.a)||0)*(parseInt(r.q)||1)),0):dMrr*2;
-  const deal={id:nDid(),customer:cn,email:document.getElementById('df-ce')?.value||'',phone:document.getElementById('df-cp')?.value||'',loc:document.getElementById('df-cl')?.value||'',plan:dPlan,mrr:dMrr,commission:comm,srcId:sid,srcName:src.name,rep:document.getElementById('df-r')?.value||'',date:document.getElementById('df-dt')?.value||td(),otf:fee,fd:document.getElementById('df-fd')?.value||'Website launch fee',ft:dFT,notes:document.getElementById('df-nt')?.value||'',stage:1,s1d:td(),s2d:'',s2u:'',s2b:'',s3d:'',s3a:0,s3r:'',s4d:'',s4a:0,s4m:'',s4r:'',s4ab:''};
+  const deal={id:nDid(),customer:cn,email:document.getElementById('df-ce')?.value||'',phone:document.getElementById('df-cp')?.value||'',loc:document.getElementById('df-cl')?.value||'',plan:dPlan,mrr:dMrr,commission:comm,srcId:sid,srcName:src.name,rep:document.getElementById('df-r')?.value||'',date:document.getElementById('df-dt')?.value||td(),otf:fee,fd:document.getElementById('df-fd')?.value||'Website launch fee',ft:dFT,notes:document.getElementById('df-nt')?.value||'',stage:1,s1d:td(),s2d:'',s2u:'',s2b:'',s3d:'',s3a:0,s3r:'',s4d:'',s4a:0,s4m:'',s4r:'',s4ab:'',created:td()};
   if(dPA==='card'&&cardEl&&stripe){
     const btn=document.getElementById('dsave');if(btn){btn.textContent='Processing...';btn.disabled=true;}
     const h=Math.round(fee/2*100),sa=Math.round(dMrr*100);
@@ -763,13 +763,13 @@ function addIL(d='',q=1,a=0){
 function cIT(){let t=0;document.querySelectorAll('#il > div').forEach(row=>{const n=row.querySelectorAll('input[type="number"]');if(n.length>=2)t+=(parseFloat(n[0].value)||1)*(parseFloat(n[1].value)||0);});const el=document.getElementById('it');if(el)el.textContent='$'+t.toFixed(2);}
 const IT={sd:[['Monthly subscription fee',1,''],['Website design fee — 50% deposit',1,'']],cp:[['Website design fee — 50% completion',1,'']],fu:[['Monthly subscription fee',1,''],['Website design fee — 100% upfront',1,'']],bt:[['Website builds — batch of 10',10,'']],cu:[['',1,'']]};
 function applyT(){const v=document.getElementById('ic-m')?.value;if(!v)return;document.getElementById('il').innerHTML='';iLC=0;(IT[v]||[]).forEach(([d,q,a])=>addIL(d,q,a));}
-function getIL(){const l=[];document.querySelectorAll('#il > div').forEach(row=>{const ins=row.querySelectorAll('input');const n=row.querySelectorAll('input[type="number"]');if(ins[0]?.value&&n.length>=2)l.push({d:ins[0].value,q:parseFloat(n[0].value)||1,a:parseFloat(n[1].value)||0});});return l;}
+function getIL(){const l=[];document.querySelectorAll('#il > div').forEach(row=>{const ins=row.querySelectorAll('input');const n=row.querySelectorAll('input[type="number"]');if(ins[0]?.value&&n.length>=2){const a=parseFloat(n[1].value)||0;if(a>0)l.push({d:ins[0].value,q:parseFloat(n[0].value)||1,a});}});return l;}
 
 async function sendIStripe(){
   const n=document.getElementById('ic-n')?.value.trim(),e=document.getElementById('ic-e')?.value.trim();
   if(!n||!e){alert('Client name and email required');return;}
   const lines=getIL(),tot=lines.reduce((s,l)=>s+l.q*l.a,0);
-  const inv={id:document.getElementById('ic-id')?.value,cn:n,ce:e,ca:document.getElementById('ic-a')?.value||'',id2:document.getElementById('ic-i2')?.value,dd:document.getElementById('ic-dd')?.value,terms:document.getElementById('ic-t')?.value,notes:document.getElementById('ic-nt')?.value,lines,tot,st:'Sending...'};
+  const inv={id:document.getElementById('ic-id')?.value,cn:n,ce:e,ca:document.getElementById('ic-a')?.value||'',id2:document.getElementById('ic-i2')?.value,dd:document.getElementById('ic-dd')?.value,terms:document.getElementById('ic-t')?.value,notes:document.getElementById('ic-nt')?.value,lines,tot,st:'Sending...',created:td()};
   const res=await api('stripeInv',{cn:n,ce:e,lines,due:inv.dd,notes:inv.notes});
   inv.st=res?.ok?'Sent':'Draft';inv.stripeId=res?.id||'';
   db.invoices.push(inv);api('saveInv',{inv});sL();cM();render();toast(res?.ok?'Invoice sent via Stripe':'Saved as draft');
@@ -777,7 +777,7 @@ async function sendIStripe(){
 function saveIDraft(){
   const n=document.getElementById('ic-n')?.value.trim();if(!n){alert('Client name required');return;}
   const lines=getIL();
-  const inv={id:document.getElementById('ic-id')?.value,cn:n,ce:document.getElementById('ic-e')?.value||'',id2:document.getElementById('ic-i2')?.value,dd:document.getElementById('ic-dd')?.value,lines,tot:lines.reduce((s,l)=>s+l.q*l.a,0),st:'Draft'};
+  const inv={id:document.getElementById('ic-id')?.value,cn:n,ce:document.getElementById('ic-e')?.value||'',id2:document.getElementById('ic-i2')?.value,dd:document.getElementById('ic-dd')?.value,lines,tot:lines.reduce((s,l)=>s+l.q*l.a,0),st:'Draft',created:td()};
   db.invoices.push(inv);api('saveInv',{inv});sL();cM();render();toast('Invoice saved as draft');
 }
 function openInv(id){
@@ -786,7 +786,7 @@ function openInv(id){
     <div style="display:flex;justify-content:space-between;margin-bottom:14px"><div><div style="font-size:15px;font-weight:500">${inv.cn}</div><div style="font-size:12px;color:var(--mu)">${inv.ce||''}</div></div><span class="badge ${inv.st==='Paid'?'bg':inv.st==='Sent'?'bb':'bgr'}">${inv.st}</span></div>
     <div class="dg" style="margin-bottom:14px">
       <div class="di"><div class="dk">Invoice #</div><div class="dv mo">${inv.id}</div></div>
-      <div class="di"><div class="dk">Total</div><div class="dv ac">${f$(inv.tot)}</div></div>
+      <div class="di"><div class="dk">Total</div><div class="dv ac">${'$'+Number(inv.tot||0).toFixed(2)}</div></div>
       <div class="di"><div class="dk">Issued</div><div class="dv">${inv.id2||'—'}</div></div>
       <div class="di"><div class="dk">Due</div><div class="dv">${inv.dd||'—'}</div></div>
     </div>
@@ -814,7 +814,7 @@ function openSettings(){
 // ── CSV ───────────────────────────────────────────────────────
 function xCSV(type){
   let h,r;
-  if(type==='src'){h=['ID','Name','Contact','Email','Phone','Address','EIN','Type','Payout','Trigger','Terms','Bank','Acct No','Routing','Method','Status'];r=db.sources.map(s=>[s.id,s.name,s.contact,s.email,s.phone,s.addr,s.ein,s.type,s.inc,s.trig,s.terms,s.bank,s.an,s.rn,s.pm,s.status]);}
+  if(type==='src'){h=['ID','Name','Contact','Email','Phone','Street','City','State','ZIP','EIN','Type','Payout','Trigger','Terms','Bank','Acct No','Routing','Method','Status'];r=db.sources.map(s=>[s.id,s.name,s.contact,s.email,s.phone,s.addr1||'',s.city||'',s.state||'',s.zip||'',s.ein,s.type,s.inc,s.trig,s.terms,s.bank,s.an,s.rn,s.pm,s.status]);}
   else if(type==='deals'){h=['ID','Customer','Email','Rep','Plan','MRR','Commission','Source','Stage','Date','S2 Date','URL','S3 Date','Fee','Stripe Ref','S4 Date','Paid','Method','Ref','Approved'];r=db.deals.map(d=>[d.id,d.customer,d.email,d.rep,d.plan,d.mrr,d.commission,d.srcName,d.stage,d.s1d,d.s2d,d.s2u,d.s3d,d.s3a,d.s3r,d.s4d,d.s4a,d.s4m,d.s4r,d.s4ab]);}
   else if(type==='pay'){const pd=db.deals.filter(d=>d.stage===4);h=['Deal ID','Customer','Partner','Amount','Method','Reference','Date','Approved'];r=pd.map(d=>[d.id,d.customer,d.srcName,d.s4a,d.s4m,d.s4r,d.s4d,d.s4ab]);}
   else if(type==='inv'){h=['ID','Client','Email','Issued','Due','Total','Status'];r=db.invoices.map(i=>[i.id,i.cn,i.ce,i.id2,i.dd,i.tot,i.st]);}
