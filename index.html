@@ -470,7 +470,10 @@ function openSrc(id){
       <div class="di"><div class="dk">Email</div><div class="dv">${s.email||'—'}</div></div>
       <div class="di"><div class="dk">Phone</div><div class="dv">${s.phone||'—'}</div></div>
       <div class="di"><div class="dk">EIN / ABN</div><div class="dv mo">${s.ein||'—'}</div></div>
-      <div class="di" style="grid-column:1/-1"><div class="dk">Address</div><div class="dv">${s.addr||'—'}</div></div>
+      <div class="di"><div class="dk">Street</div><div class="dv">${s.addr1||s.addr||'—'}</div></div>
+      <div class="di"><div class="dk">City</div><div class="dv">${s.city||'—'}</div></div>
+      <div class="di"><div class="dk">State</div><div class="dv">${s.state||'—'}</div></div>
+      <div class="di"><div class="dk">ZIP</div><div class="dv">${s.zip||'—'}</div></div>
     </div></div>
     <div class="ds"><div class="dh">Banking & payout</div><div class="dg">
       <div class="di"><div class="dk">Bank</div><div class="dv">${s.bank||'—'}</div></div>
@@ -710,7 +713,7 @@ async function saveDeal(){
     if(ca<=0){document.getElementById('serr').textContent='Amount is $0 — enter a one-time fee amount above';if(btn){btn.textContent='Charge & save deal';btn.disabled=false;}return;}
     // Step 1: create PaymentIntent on server
     const pi=await api('charge',{amount:ca,desc:`ZING — ${cn} ${dPlan}`});
-    if(!pi||!pi.clientSecret){document.getElementById('serr').textContent='Payment failed: '+(pi?.err||'Could not create payment');if(btn){btn.textContent='Charge & save deal';btn.disabled=false;}return;}
+    if(!pi||!pi.clientSecret){document.getElementById('serr').textContent='Payment failed: '+(pi?.error||'Could not create payment');if(btn){btn.textContent='Charge & save deal';btn.disabled=false;}return;}
     // Step 2: confirm card in browser (handles 3DS automatically)
     const{paymentIntent,error}=await stripe.confirmCardPayment(pi.clientSecret,{payment_method:{card:cardEl}});
     if(error){document.getElementById('serr').textContent='Payment failed: '+error.message;if(btn){btn.textContent='Charge & save deal';btn.disabled=false;}return;}
